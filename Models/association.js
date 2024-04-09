@@ -4,13 +4,13 @@ const Question = require("./QuestionModel")
 const Exam = require("./ExamModel")
 
 // Set up associations
-Course.hasMany(Chapter, { foreignKey: 'course_id' });
-Chapter.belongsTo(Course, { foreignKey: 'course_id' });
+Course.hasMany(Chapter, { foreignKey: 'course_id' , onDelete: 'CASCADE' });
+Chapter.belongsTo(Course, { foreignKey: 'course_id' , onDelete: 'CASCADE' });
 
-Chapter.hasMany(Question, { foreignKey: 'chapter_id' });
-Question.belongsTo(Chapter, { foreignKey: 'chapter_id' });
+Chapter.hasMany(Question, { foreignKey: 'chapter_id' , onDelete: 'CASCADE' });
+Question.belongsTo(Chapter, { foreignKey: 'chapter_id' , onDelete: 'CASCADE' });
 
-Course.hasMany(Exam, { foreignKey: 'course_id' });
-Exam.belongsTo(Course, { foreignKey: 'course_id' });
+Course.hasMany(Exam, { foreignKey: 'course_id' , onDelete: 'CASCADE' });
+Exam.belongsTo(Course, { foreignKey: 'course_id' , onDelete: 'CASCADE' });
 
 module.exports = { Course, Chapter ,Question,Exam };

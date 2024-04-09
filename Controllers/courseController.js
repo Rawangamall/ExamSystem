@@ -41,7 +41,7 @@ exports.getAllCourse = CatchAsync(async (req,res,next)=>{
 
     const { count, rows } = await Course.findAndCountAll({
         where: {
-          title: {
+          name: {
             [Op.like]: searchKey
           }
         },
