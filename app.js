@@ -7,7 +7,7 @@ const bodyParser = require('body-parser');
 
 require("dotenv").config({ path: "config.env" });
 // const LoginRoute = require("./Routes/LoginRoute");
-// const UserRoute = require("./Routes/UserRoute");
+// const TeacherRoute = require("./Routes/TeacherRoute");
 
 //server
 

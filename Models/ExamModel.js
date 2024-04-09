@@ -14,45 +14,16 @@ const Exam = sequelize.define('exams',{
         primaryKey: true,
         autoIncrement: true,
     },
-    text:{
-        type: DataTypes.STRING,
-        allowNull: false
-    }
-    ,
-    choice1:{
-        type: DataTypes.STRING,
-        allowNull: false
-    }
-    ,
-    choice2:{
-        type: DataTypes.STRING,
-        allowNull: false
-    }
-    ,
-    choice3:{
-        type: DataTypes.STRING,
-        allowNull: false
-    }
-    ,
-    correct_choice:{
+    total_questions:{
         type: DataTypes.INTEGER,
-        allowNull: false, 
-        validate: {
-          isIn: {
-            args: [Object.values([0,1,2])],
-            msg: "Invalid correct choice value"
-          }
-        }
+        allowNull: false
     },
-    difficulty: {
-        type: DataTypes.ENUM(["simple","difficult"]),
+    questions_ch:{
+        type: DataTypes.INTEGER,
         allowNull: false
-      }
-    ,
-    objective:{
-        type: DataTypes.ENUM(["reminding","understanding","creativity"]),
-        allowNull: false
-    }
+    },
+    difficult: DataTypes.JSON,
+    objectives: DataTypes.JSON
 });
 
 SequelizePaginate.paginate(Exam);
