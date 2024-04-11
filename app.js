@@ -1,15 +1,13 @@
 const express= require("express");
 const cors = require("cors");
 const sequelize = require('./utils/dbConfig');
-const path=require("path"); 
-const fs = require('fs');
-const bodyParser = require('body-parser');
-
 require("dotenv").config({ path: "config.env" });
+
 // const LoginRoute = require("./Routes/LoginRoute");
 // const TeacherRoute = require("./Routes/TeacherRoute");
  const CourseRoute = require("./Routes/CourseRoute");
  const ChapterRoute = require("./Routes/ChapterRoute");
+ const QuestionRoute = require("./Routes/QuestionRoute");
 
 //server
 
@@ -43,6 +41,7 @@ app.use(express.urlencoded({extended:false}));
 //Routes 
 app.use(CourseRoute)
 app.use(ChapterRoute)
+app.use(QuestionRoute)
 
 //Not Found Middleware
 app.use((request, response, next) => {
