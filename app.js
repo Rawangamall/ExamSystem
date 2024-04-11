@@ -8,6 +8,8 @@ const bodyParser = require('body-parser');
 require("dotenv").config({ path: "config.env" });
 // const LoginRoute = require("./Routes/LoginRoute");
 // const TeacherRoute = require("./Routes/TeacherRoute");
+ const CourseRoute = require("./Routes/CourseRoute");
+ const ChapterRoute = require("./Routes/ChapterRoute");
 
 //server
 
@@ -39,7 +41,8 @@ app.use(express.json());
 app.use(express.urlencoded({extended:false}));
 
 //Routes 
-
+app.use(CourseRoute)
+app.use(ChapterRoute)
 
 //Not Found Middleware
 app.use((request, response, next) => {
