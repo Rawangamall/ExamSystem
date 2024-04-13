@@ -1,4 +1,4 @@
-const { Question , Chapter} = require("./../Models/association")
+const { Question , Chapter ,Course} = require("./../Models/association")
 const { Op} = require("sequelize");
 
 const CatchAsync = require("./../utils/CatchAsync")
@@ -14,7 +14,7 @@ exports.createQuestion = CatchAsync(async (req,res,next)=>{
     }
 
     const [question, created] = await Question.findOrCreate({
-        where: { text: text, chapter_id: chapterID },
+        where: { text: text, chapter_id: chapterID }, 
         defaults: {
             text: text,
             choice1: choice1,
@@ -77,19 +77,55 @@ exports.getAllQuestion = CatchAsync(async (req,res,next)=>{
         });
 })
 
+
+exports.fetchAllQuestion = async (courseID)=>{
+    const course = await Course.findByPk(courseID, {
+        include: [{ model: Chapter, as: 'chapters' }]
+    });
+
+    if (!course) {
+        throw new Error('Course not found');
+    }
+
+    const chapterIds = course.chapters.map(chapter => chapter.id);
+    const { count, rows } = await Question.findAndCountAll({ 
+        where: {chapter_id: chapterIds}
+    });
+
+    if (rows.length == 0) {
+        throw new Error("No Question found");
+    }
+    return {
+        data: rows,
+        totalQuestions: count,
+    };
+}
+
 exports.updateQuestion = CatchAsync(async (req,res,next)=>{
     const id = req.params.id;
-
     const chapterID = parseInt(req.body?.chapterID);
-
     const question = await Question.findByPk(id);
+
     if (!question) {
         res.status(404).json({message:`Question not found`});
     }  
-   
+    if (chapterID) {
+        const chapter = await Chapter.findByPk(chapterID);
+        if (!chapter) {
+            return res.status(404).json({ message: "Chapter not found" });
+        }
+        question.chapter_id = chapterID;
+    }
     
-    await question.save();
-    res.status(200).json({ message: 'Question updated successfully',data: question });
+    Object.keys(req.body).forEach(field => {
+       
+        if (question[field] !== undefined) {
+            question[field] = req.body[field];
+        } 
+    });
+    
+     const newquestion = await question.save();
+    res.status(200).json({ message: 'Question updated successfully',data: newquestion });
 
 })
 

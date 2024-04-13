@@ -8,6 +8,7 @@ require("dotenv").config({ path: "config.env" });
  const CourseRoute = require("./Routes/CourseRoute");
  const ChapterRoute = require("./Routes/ChapterRoute");
  const QuestionRoute = require("./Routes/QuestionRoute");
+ const ExamRoute = require("./Routes/ExamRoute");
 
 //server
 
@@ -37,11 +38,11 @@ app.use(
 //body parse
 app.use(express.json());
 app.use(express.urlencoded({extended:false}));
-
 //Routes 
 app.use(CourseRoute)
 app.use(ChapterRoute)
 app.use(QuestionRoute)
+app.use(ExamRoute)
 
 //Not Found Middleware
 app.use((request, response, next) => {
