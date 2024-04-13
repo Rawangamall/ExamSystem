@@ -4,7 +4,7 @@ const {Course} = require("./../../Models/association")
 
 exports.postValidation = [
 body("total_questions").isNumeric().withMessage("You should enter the total questions in exam"),
-body("questions_ch").isNumeric().withMessage("You should enter the total questions per chapter"),
+body("questions_ch").isArray().withMessage("You should enter the total questions per chapter"),
 body('simple').isNumeric().withMessage('Simple total questions must be a number'),
 body('difficult').isNumeric().withMessage('Difficult total questions must be a number'),
 body('reminding').isNumeric().withMessage('Reminding objective total questions must be a number'),

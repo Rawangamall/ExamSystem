@@ -8,7 +8,7 @@ exports.CreateExam = CatchAsync(async(req,res,next)=>{
 
  const exam = await Exam.create({
     total_questions: total_questions,
-    questions_ch: questions_ch,
+    questions_ch: questions_ch,  //[{chapterID , NumQuestions}]
     difficult :{difficult:difficult , simple:simple},
     objectives:{
         reminding: reminding,
@@ -18,35 +18,22 @@ exports.CreateExam = CatchAsync(async(req,res,next)=>{
     course_id :courseID 
  })
 
- const populationSize = 4;
-const population =await fetchQuestions(populationSize, exam.total_questions ,exam.course_id )
+const population =await fetchQuestions(exam )
    res.status(200).json({population})
 });
 
-function initializePopulation(questions, populationSize, questionsPerExam) {
-    const population = [];
-    for (let i = 0; i < populationSize; i++) {
-        const examConfiguration = [];
-        for (let j = 0; j < questionsPerExam; j++) {
-            const randomIndex = Math.floor(Math.random() * questions.length);
-            examConfiguration.push(questions[randomIndex]);
-        }
-        population.push(examConfiguration);
-    }
-    return population;
-}
-
-async function fetchQuestions(populationSize, questionsPerExam , courseID) {
+async function fetchQuestions(exam) {
     try {
-        const response = await fetchAllQuestion(courseID);
+        const response = await fetchAllQuestion(exam.course_id);
         const questions = response.data;
         const questionsCount = response.totalQuestions;
 
-        if (questionsCount < populationSize * questionsPerExam) {
+        if (questionsCount < exam.total_questions) {
             throw new Error('Not enough questions available');
         }
 
-        const initialPopulation = initializePopulation(questions, populationSize, questionsPerExam);
+        const populationSize = 4;
+        const initialPopulation = initializePopulation(questions, populationSize, exam);
         return initialPopulation;
 
     } catch (error) {
@@ -54,4 +41,49 @@ async function fetchQuestions(populationSize, questionsPerExam , courseID) {
         throw error;
     }
 }
+
+
+function initializePopulation(questions,populationSize, exam) {
+    /*
+  Terms: questions => all question of specific course
+       availableQuestions => questions of choosen chapters in the course according to teacher needs
+       selectedQuestions => the random questions selected to build exam versions 
+    */
+
+    const population = [];
+    const totalQuestionsNeeded = populationSize * exam.total_questions;
+
+    if (questions.length < totalQuestionsNeeded) {
+        throw new Error('Not enough questions available to create exam configurations');
+    }
+
+    for (let i = 0; i < populationSize; i++) {
+        const examConfiguration = [];
+        
+        // for each chapter select number of random questions 
+        exam.questions_ch.forEach(chapter => {
+            const chapterID = chapter.chapterID;
+            const selectedQuestions = [];
+            const availableQuestions = questions.filter(question => question.chapter_id === chapterID);
+
+            if (availableQuestions.length < chapter.NumQuestions) {
+                throw new Error(`Not enough questions available for chapter ${chapterID}`);
+            }
+
+            // Randomly select questions from the chapter
+            for (let j = 0; j < chapter.NumQuestions; j++) {
+                const randomIndex = Math.floor(Math.random() * availableQuestions.length);
+                selectedQuestions.push(availableQuestions[randomIndex]);
+                availableQuestions.splice(randomIndex, 1); // remove selected question to avoid duplicates
+            }
+            
+            examConfiguration.push(...selectedQuestions);
+        });
+
+        population.push(examConfiguration);
+    }
+
+    return population;
+}
+
 
