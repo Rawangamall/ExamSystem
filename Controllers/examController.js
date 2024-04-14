@@ -32,8 +32,8 @@ const fitnessScores = population.map(examConfig => {
 });
 
 console.log("Fitness scores:", fitnessScores);
-
-res.status(200).json({ population, fitnessScores });
+const parents = rouletteWheelSelection(population,fitnessScores)
+res.status(200).json({ parents, fitnessScores });
 });
 
 async function fetchQuestions(exam) {
@@ -115,7 +115,7 @@ function calculateFitness(examConfiguration, criteria) {
       counts[question.objective] = (counts[question.objective] || 0) + 1;
       return counts;
     }, {});
-    
+
   console.log("difficultyCounts:",difficultyCounts,"objectiveCounts:",objectiveCounts)
     // Calculate actual ratios
     const simpleRatioActual = difficultyCounts.simple / totalQuestions;
@@ -137,6 +137,30 @@ function calculateFitness(examConfiguration, criteria) {
   
     // Combine scores
     return 1 / (1 + difficultyScore + objectiveScore);
+  }
+  
+  function rouletteWheelSelection(population, fitnessScores) {
+
+    const totalFitness = fitnessScores.reduce((sum, score) => sum + score, 0);
+    const selectedParents = [];
+  
+    while (selectedParents.length < 2) {  //select 2 parents
+      const randomFitness = Math.random() * totalFitness;
+      let currentFitness = 0;
+  
+      for (let i = 0; i < population.length; i++) {
+        currentFitness += fitnessScores[i];
+        if (currentFitness >= randomFitness) {
+            selectedParents.push({
+                configuration: population[i],
+                score: fitnessScores[i]
+              });         
+               break;
+        }
+      }
+    }
+  
+    return selectedParents;
   }
   
   
