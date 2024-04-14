@@ -19,7 +19,21 @@ exports.CreateExam = CatchAsync(async(req,res,next)=>{
  })
 
 const population =await fetchQuestions(exam )
-   res.status(200).json({population})
+const fitnessScores = population.map(examConfig => {
+    return calculateFitness(examConfig, {
+        simpleRatio: simple / total_questions,
+        difficultRatio: difficult / total_questions,
+        objectiveRatios: {
+            reminding: reminding / total_questions,
+            understanding: understanding / total_questions,
+            creativity: creativity / total_questions
+        }
+    });
+});
+
+console.log("Fitness scores:", fitnessScores);
+
+res.status(200).json({ population, fitnessScores });
 });
 
 async function fetchQuestions(exam) {
@@ -86,4 +100,43 @@ function initializePopulation(questions,populationSize, exam) {
     return population;
 }
 
-
+function calculateFitness(examConfiguration, criteria) {
+    const { simpleRatio, difficultRatio, objectiveRatios } = criteria;
+    const totalQuestions = examConfiguration.length;
+  
+    // difficulty level counts
+    const difficultyCounts = examConfiguration.reduce((counts, question) => {
+      counts[question.difficulty] = (counts[question.difficulty] || 0) + 1;
+      return counts;
+    }, {});
+  
+    // objective level counts
+    const objectiveCounts = examConfiguration.reduce((counts, question) => {
+      counts[question.objective] = (counts[question.objective] || 0) + 1;
+      return counts;
+    }, {});
+    
+  console.log("difficultyCounts:",difficultyCounts,"objectiveCounts:",objectiveCounts)
+    // Calculate actual ratios
+    const simpleRatioActual = difficultyCounts.simple / totalQuestions;
+    const difficultRatioActual = difficultyCounts.difficult / totalQuestions;
+    const objectiveRatiosActual = Object.keys(objectiveRatios).reduce((obj, objective) => {
+      obj[objective] = objectiveCounts[objective] / totalQuestions;
+      return obj;
+    }, {});
+  
+    const normalizeDifference = diff => Math.min(diff, 1); // normalize between 0 and 1
+  
+    // Calculate (weighted)
+    const weightDifficulty = 0.5;
+    const difficultyScore = weightDifficulty * normalizeDifference(Math.abs(simpleRatioActual - simpleRatio)) + weightDifficulty * normalizeDifference(Math.abs(difficultRatioActual - difficultRatio));
+  
+    const weightObjective = 0.5;
+    const objectiveScore = weightObjective * Object.keys(objectiveRatios)
+      .reduce((score, objective) => score + normalizeDifference(Math.abs(objectiveRatiosActual[objective] - objectiveRatios[objective])), 0);
+  
+    // Combine scores
+    return 1 / (1 + difficultyScore + objectiveScore);
+  }
+  
+  
