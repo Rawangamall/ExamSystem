@@ -33,6 +33,8 @@ const fitnessScores = population.map(examConfig => {
 
 console.log("Fitness scores:", fitnessScores);
 const parents = rouletteWheelSelection(population,fitnessScores)
+const [child1, child2] = singlePointCrossover(parents[0].configuration, parents[1].configuration);
+
 res.status(200).json({ parents, fitnessScores });
 });
 
@@ -163,4 +165,14 @@ function calculateFitness(examConfiguration, criteria) {
     return selectedParents;
   }
   
+  function singlePointCrossover(parent1, parent2) {
+    // random crossover point
+    const crossoverPoint = Math.floor(Math.random() * (parent1.length - 1)) + 1;
+  
+    //  swapping questions in crossover point
+    const child1 = parent1.slice(0, crossoverPoint).concat(parent2.slice(crossoverPoint));
+    const child2 = parent2.slice(0, crossoverPoint).concat(parent1.slice(crossoverPoint));
+  
+    return [child1, child2];
+  }
   
