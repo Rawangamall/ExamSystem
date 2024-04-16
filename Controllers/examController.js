@@ -2,41 +2,79 @@ const { fetchAllQuestion } = require('./questionController');
 const {Exam} = require("./../Models/association")
 const CatchAsync = require('./../utils/CatchAsync');
 
-exports.CreateExam = CatchAsync(async(req,res,next)=>{
- const {total_questions,questions_ch,simple,difficult,reminding,understanding,creativity,courseID} = req.body
- //Create
 
- const exam = await Exam.create({
-    total_questions: total_questions,
-    questions_ch: questions_ch,  //[{chapterID , NumQuestions}]
-    difficult :{difficult:difficult , simple:simple},
-    objectives:{
-        reminding: reminding,
-        understanding:understanding,
-        creativity: creativity
-    },
-    course_id :courseID 
- })
+exports.CreateExam = CatchAsync(async (req, res, next) => {
 
-const population =await fetchQuestions(exam )
-const fitnessScores = population.map(examConfig => {
-    return calculateFitness(examConfig, {
-        simpleRatio: simple / total_questions,
-        difficultRatio: difficult / total_questions,
-        objectiveRatios: {
+    const { total_questions, questions_ch, simple, difficult, reminding, understanding, creativity, courseID } = req.body;
+  
+    // Create exam
+    const exam = await Exam.create({
+      total_questions,
+      questions_ch, // [{chapterID , NumQuestions}]
+      difficult: { difficult, simple },
+      objectives: { reminding, understanding, creativity },
+      course_id: courseID,
+    });
+  
+    let { population, availableQuestions } = await fetchQuestions(exam);
+    let fitnessScores =[];
+
+    const numGenerations = 8;
+    const mutationRate = 0.2;
+    const numBestIndividuals = 2;
+    const tournamentSize =3
+
+    for (let generation = 0; generation < numGenerations; generation++) {
+  
+      // Calculate fitness scores
+      fitnessScores = population.map(examConfig =>
+        calculateFitness(examConfig, {
+          simpleRatio: simple / total_questions,
+          difficultRatio: difficult / total_questions,
+          objectiveRatios: {
             reminding: reminding / total_questions,
             understanding: understanding / total_questions,
             creativity: creativity / total_questions
-        }
-    });
+          }
+        })
+      );
+
+      // paraent election 
+     // const parents = rouletteWheelSelection(population, fitnessScores);
+     const parents = tournamentSelection(population, fitnessScores, tournamentSize);
+
+      const [child1, child2] = singlePointCrossover(parents[0].configuration, parents[1].configuration);
+      const mutatedChildren = mutate([child1, child2], mutationRate, availableQuestions);
+  
+      // fitness scores again for mutated children
+      const mutatedFitnessScores = mutatedChildren.map(examConfig =>
+        calculateFitness(examConfig, {
+          simpleRatio: simple / total_questions,
+          difficultRatio: difficult / total_questions,
+          objectiveRatios: {
+            reminding: reminding / total_questions,
+            understanding: understanding / total_questions,
+            creativity: creativity / total_questions
+          }
+        })
+      );
+
+      // Combine mutated children with best individuals
+      const bestIndividuals = selectBestFromPopulation(population, fitnessScores, numBestIndividuals);
+      population = [...mutatedChildren, ...bestIndividuals];
+
+      // Update fitness scores with mutated children
+      fitnessScores = [...mutatedFitnessScores, ...fitnessScores.slice(0, numBestIndividuals)];
+    }
+    console.log("fitnessScores 2",fitnessScores)
+
+    const fittestIndex = fitnessScores.indexOf(Math.max(...fitnessScores));
+    const fittestExam = population[fittestIndex];
+    
+    res.status(200).json({ fittestExam });
 });
 
-console.log("Fitness scores:", fitnessScores);
-const parents = rouletteWheelSelection(population,fitnessScores)
-const [child1, child2] = singlePointCrossover(parents[0].configuration, parents[1].configuration);
 
-res.status(200).json({ parents, fitnessScores });
-});
 
 async function fetchQuestions(exam) {
     try {
@@ -68,7 +106,7 @@ function initializePopulation(questions,populationSize, exam) {
 
     const population = [];
     const totalQuestionsNeeded = populationSize * exam.total_questions;
-
+    let availableQuestions=[]
     if (questions.length < totalQuestionsNeeded) {
         throw new Error('Not enough questions available to create exam configurations');
     }
@@ -80,7 +118,7 @@ function initializePopulation(questions,populationSize, exam) {
         exam.questions_ch.forEach(chapter => {
             const chapterID = chapter.chapterID;
             const selectedQuestions = [];
-            const availableQuestions = questions.filter(question => question.chapter_id === chapterID);
+             availableQuestions = questions.filter(question => question.chapter_id === chapterID);
 
             if (availableQuestions.length < chapter.NumQuestions) {
                 throw new Error(`Not enough questions available for chapter ${chapterID}`);
@@ -99,7 +137,7 @@ function initializePopulation(questions,populationSize, exam) {
         population.push(examConfiguration);
     }
 
-    return population;
+    return {population,availableQuestions};
 }
 
 function calculateFitness(examConfiguration, criteria) {
@@ -118,17 +156,16 @@ function calculateFitness(examConfiguration, criteria) {
       return counts;
     }, {});
 
-  console.log("difficultyCounts:",difficultyCounts,"objectiveCounts:",objectiveCounts)
     // Calculate actual ratios
-    const simpleRatioActual = difficultyCounts.simple / totalQuestions;
-    const difficultRatioActual = difficultyCounts.difficult / totalQuestions;
+    const simpleRatioActual = difficultyCounts.simple / totalQuestions || 0;
+    const difficultRatioActual = difficultyCounts.difficult / totalQuestions || 0;
     const objectiveRatiosActual = Object.keys(objectiveRatios).reduce((obj, objective) => {
-      obj[objective] = objectiveCounts[objective] / totalQuestions;
+      obj[objective] = objectiveCounts[objective] / totalQuestions || 0;
       return obj;
     }, {});
   
     const normalizeDifference = diff => Math.min(diff, 1); // normalize between 0 and 1
-  
+   
     // Calculate (weighted)
     const weightDifficulty = 0.5;
     const difficultyScore = weightDifficulty * normalizeDifference(Math.abs(simpleRatioActual - simpleRatio)) + weightDifficulty * normalizeDifference(Math.abs(difficultRatioActual - difficultRatio));
@@ -141,28 +178,29 @@ function calculateFitness(examConfiguration, criteria) {
     return 1 / (1 + difficultyScore + objectiveScore);
   }
   
-  function rouletteWheelSelection(population, fitnessScores) {
-
-    const totalFitness = fitnessScores.reduce((sum, score) => sum + score, 0);
+  function tournamentSelection(population, fitnessScores, tournamentSize) {
     const selectedParents = [];
   
-    while (selectedParents.length < 2) {  //select 2 parents
-      const randomFitness = Math.random() * totalFitness;
-      let currentFitness = 0;
-  
-      for (let i = 0; i < population.length; i++) {
-        currentFitness += fitnessScores[i];
-        if (currentFitness >= randomFitness) {
-            selectedParents.push({
-                configuration: population[i],
-                score: fitnessScores[i]
-              });         
-               break;
+    while (selectedParents.length < 2) {
+        const tournamentParticipants = [];
+        for (let i = 0; i < tournamentSize; i++) {
+            const randomIndex = Math.floor(Math.random() * population.length);
+            tournamentParticipants.push({ configuration: population[randomIndex], score: fitnessScores[randomIndex] });
         }
-      }
+      
+        tournamentParticipants.sort((a, b) => b.score - a.score);      
+        selectedParents.push(tournamentParticipants[0]);
     }
   
     return selectedParents;
+}
+  
+function selectBestFromPopulation(population, fitnessScores, numToRetain=2) {
+
+    const sortedPopulation = population.map((config, index) => ({ config, index }))
+      .sort((a, b) => fitnessScores[b.index] - fitnessScores[a.index]);
+
+      return sortedPopulation.slice(0, numToRetain).map(individual => individual.config);
   }
   
   function singlePointCrossover(parent1, parent2) {
@@ -175,4 +213,36 @@ function calculateFitness(examConfiguration, criteria) {
   
     return [child1, child2];
   }
+
+
+function mutate(children, mutationRate, availableQuestions) {
+    const mutatedChildren = [];
   
+    for (const childConfig of children) {
+        if (Math.random() < mutationRate) {
+            const mutatedChild = [];
+
+            for (const question of childConfig) {
+                if (Math.random() < mutationRate) {                                              //same chapter but diff ques in the exam
+                    const chapterQuestions = availableQuestions.filter(q => q.chapterID === question.chapterID && !childConfig.some(childQuestion => childQuestion.id === q.id));
+                    
+                    if (chapterQuestions.length > 0) {
+                        const randomQuestionIndex = Math.floor(Math.random() * chapterQuestions.length);
+                        const newQuestion = chapterQuestions[randomQuestionIndex];
+                        mutatedChild.push(newQuestion);
+                    } else {
+                        mutatedChild.push(question); // no suitable question found
+                    }
+                } else {
+                    mutatedChild.push(question); // no mutation
+                }
+            }
+
+            mutatedChildren.push(mutatedChild);
+        } else {
+            mutatedChildren.push(childConfig); // no mutation
+        }
+    }
+
+    return mutatedChildren;
+}
