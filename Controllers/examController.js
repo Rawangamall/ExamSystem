@@ -18,45 +18,40 @@ exports.CreateExam = CatchAsync(async (req, res, next) => {
   
     let { population, availableQuestions } = await fetchQuestions(exam);
     let fitnessScores =[];
-
-    const numGenerations = 8;
+    let fittestExam;
+    let fittestIndex;
+    const maxGenerations = 500;
     const mutationRate = 0.2;
     const numBestIndividuals = 2;
     const tournamentSize =3
+    let generation = 0;
+    let terminationConditionMet = false;
+    const teacherCriteria = {
+        simpleRatio: simple / total_questions,
+        difficultRatio: difficult / total_questions,
+        objectiveRatios: {
+          reminding: reminding / total_questions,
+          understanding: understanding / total_questions,
+          creativity: creativity / total_questions
+        }
+      }
 
-    for (let generation = 0; generation < numGenerations; generation++) {
-  
+      while (!terminationConditionMet && generation < maxGenerations) {  
       // Calculate fitness scores
       fitnessScores = population.map(examConfig =>
-        calculateFitness(examConfig, {
-          simpleRatio: simple / total_questions,
-          difficultRatio: difficult / total_questions,
-          objectiveRatios: {
-            reminding: reminding / total_questions,
-            understanding: understanding / total_questions,
-            creativity: creativity / total_questions
-          }
-        })
+        calculateFitness(examConfig, teacherCriteria)
       );
-
       // paraent election 
      // const parents = rouletteWheelSelection(population, fitnessScores);
      const parents = tournamentSelection(population, fitnessScores, tournamentSize);
 
       const [child1, child2] = singlePointCrossover(parents[0].configuration, parents[1].configuration);
+
       const mutatedChildren = mutate([child1, child2], mutationRate, availableQuestions);
-  
+
       // fitness scores again for mutated children
       const mutatedFitnessScores = mutatedChildren.map(examConfig =>
-        calculateFitness(examConfig, {
-          simpleRatio: simple / total_questions,
-          difficultRatio: difficult / total_questions,
-          objectiveRatios: {
-            reminding: reminding / total_questions,
-            understanding: understanding / total_questions,
-            creativity: creativity / total_questions
-          }
-        })
+        calculateFitness(examConfig, teacherCriteria)
       );
 
       // Combine mutated children with best individuals
@@ -65,17 +60,22 @@ exports.CreateExam = CatchAsync(async (req, res, next) => {
 
       // Update fitness scores with mutated children
       fitnessScores = [...mutatedFitnessScores, ...fitnessScores.slice(0, numBestIndividuals)];
-    }
-    console.log("fitnessScores 2",fitnessScores)
+      fittestIndex = fitnessScores.indexOf(Math.max(...fitnessScores));
+      fittestExam = population[fittestIndex];
 
-    const fittestIndex = fitnessScores.indexOf(Math.max(...fitnessScores));
-    const fittestExam = population[fittestIndex];
-    
+      terminationConditionMet = checkTerminationCondition(fittestExam, teacherCriteria);
+
+      generation++;
+    }
     res.status(200).json({ fittestExam });
 });
 
-
-
+function checkTerminationCondition(examConfig, criteria) {
+    const fitnessScore = calculateFitness(examConfig, criteria);
+    return fitnessScore >= 0.9; // threshold
+  }
+  
+  
 async function fetchQuestions(exam) {
     try {
         const response = await fetchAllQuestion(exam.course_id);
