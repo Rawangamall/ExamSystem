@@ -19,9 +19,9 @@ exports.auth = catchAsync(async (req,res,next)=>{
 const decoded = await promisify(JWT.verify)(token,process.env.JWT_SECRET);
 
 //verify if the Teacher of that token still exist
-const Teacher = await Teacher.findByPk(decoded.id);
+const teacher = await Teacher.findByPk(decoded.id);
 
-if(!Teacher){
+if(!teacher){
     return next(new AppError("The Teacher of that token no longer exist"),401)
 }
 
