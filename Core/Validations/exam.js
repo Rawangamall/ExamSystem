@@ -29,8 +29,8 @@ const parseIntBody = (req, res, next) => {
 exports.postValidation = [
     parseIntBody,
 body("total_questions").isNumeric().withMessage("You should enter the total questions in exam"),
-body('questions_ch').customSanitizer(parseJsonArray), // Use custom sanitizer
-body("questions_ch").isArray().withMessage("You should enter the total questions per chapter as an array"),
+//body('questions_ch').customSanitizer(parseJsonArray), // Use custom sanitizer
+body("questions_ch").isArray().withMessage("You should enter the total questions per chapter "),
 body('simple').isNumeric().withMessage('Simple total questions must be a number'),
 body('difficult').isNumeric().withMessage('Difficult total questions must be a number'),
 body('reminding').isNumeric().withMessage('Reminding objective total questions must be a number'),

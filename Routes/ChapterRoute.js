@@ -12,7 +12,7 @@ const chapterController = require("./../Controllers/chapterController");
 
 router.route("/chapters")
        .get(chapterController.getAllChapter)
-       .post(Upload.none(),postValidation,validateMW,chapterController.createChapter)
+       .post(postValidation,validateMW,chapterController.createChapter)
  
 router.route("/chapter/:id")
        .get(chapterController.getOneChapter)

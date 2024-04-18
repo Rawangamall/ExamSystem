@@ -47,7 +47,8 @@ exports.getAllCourse = CatchAsync(async (req,res,next)=>{
         },
          include: [{ model: Chapter, as: 'chapters' }] ,
          offset: offset,
-         limit: limit
+         limit: limit,
+         distinct:true
       });
 
     if (rows.length == 0) {

@@ -10,19 +10,20 @@ require("dotenv").config({ path: "config.env" });
  const QuestionRoute = require("./Routes/QuestionRoute");
  const ExamRoute = require("./Routes/ExamRoute");
 
-//server
+ //server
 
 const app = express();
 let port= process.env.PORT||8080;
 app.listen(port,()=>{
     console.log("server is listenng.....",port);
 });
+app.use(express.static('Public/Dashboard'));
 
 //db connection
 sequelize.sync({ force: false }) 
   .then(() => {
     console.log('Database synced');
-  })
+  }) 
   .catch(err => {
     console.error('Error syncing database:', err);
   });

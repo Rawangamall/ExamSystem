@@ -12,7 +12,7 @@ const CourseController = require("./../Controllers/courseController");
 
 router.route("/courses")
        .get(CourseController.getAllCourse)
-       .post(Upload.none(),postValidation,validateMW,CourseController.createCourse)
+       .post(postValidation,validateMW,CourseController.createCourse)
 
 router.route("/course/:id")
        .get(CourseController.getOneCourse)

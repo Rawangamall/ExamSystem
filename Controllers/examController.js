@@ -67,7 +67,7 @@ exports.CreateExam = CatchAsync(async (req, res, next) => {
 
       generation++;
     }
-    res.status(200).json({ fittestExam });
+    res.status(200).json({ fittestExam , perecntage: 100 * Math.max(...fitnessScores)});
 });
 
 function checkTerminationCondition(examConfig, criteria) {

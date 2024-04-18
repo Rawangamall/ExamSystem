@@ -32,6 +32,15 @@ body("chapterID").custom(async (value) => {
     }
     return true
 }),
+body().custom((value, { req }) => {
+    const choices = [req.body.choice1, req.body.choice2, req.body.choice3];
+
+    if (new Set(choices).size !== choices.length) {
+      throw new Error("Question choices must be all unique!");
+    }
+
+    return true;
+  }),
 ]
 
 exports.patchValidation = [

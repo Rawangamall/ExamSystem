@@ -12,7 +12,7 @@ const questionController = require("../Controllers/questionController");
 
 router.route("/questions")
        .get(questionController.getAllQuestion)
-       .post(Upload.none(),postValidation,validateMW,questionController.createQuestion)
+       .post(postValidation,validateMW,questionController.createQuestion)
 
 router.route("/question/:id")
        .get(questionController.getOneQuestion)

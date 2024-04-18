@@ -53,9 +53,9 @@ exports.getAllChapter = CatchAsync(async (req,res,next)=>{
             [Op.like]: `%${searchKey}%`
           }
         },
-        include: [{ model: Question, as: 'questions' }] ,
         offset: offset,
-        limit: limit
+        limit: limit,
+        distinct:true
       });
 
       
