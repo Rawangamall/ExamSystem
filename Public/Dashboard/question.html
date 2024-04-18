@@ -42,6 +42,9 @@
     </div>
     <div id="layoutSidenav_content">
         <main>
+            <div class="add-icon" onclick="redirectToFormPage()">
+                <i class="fas fa-plus-circle"></i>
+              </div>
             <div class="container-fluid px-4">
                 <h1 class="mt-4">Tables</h1>
                 <ol class="breadcrumb mb-4">
@@ -103,6 +106,7 @@
                     </div>
                 </div>
             </div>
+
         </footer>
     </div>
 </div>
@@ -111,10 +115,16 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js" crossorigin="anonymous"></script>
 <script>
+
+function redirectToFormPage() {
+      window.location.href = './forms/question.html'; // Replace 'formPage.html' with the URL of your form page
+    }
+    
     $(document).ready(function() {
-        const fetchData = async () => {
-            let limit = 10
-             let searchKey=""
+        const fetchData = async (limit) => {
+            console.log("Fetching data with limit:", limit);
+
+            let searchKey=""
              let page=1
             const url = `http://localhost:8080/questions?limit=${limit}&searchkey=${searchKey}&page=${page}`;
             try {
@@ -203,10 +213,15 @@
             }
         };
 
-
+// Attach event listener for changes in the limit selection dropdown
+$(document).on("change", ".datatable-selector", function() {
+    const limit = $(this).val();
+    console.log("Limit selected:", limit);
+    fetchData(limit); // Fetch data with the selected limit value
+});
 
         // Fetch data with default values
-        fetchData();
+        fetchData(10);
     });
 </script>
 </body>

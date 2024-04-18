@@ -42,6 +42,9 @@
     </div>
     <div id="layoutSidenav_content">
         <main>
+            <div class="add-icon" onclick="redirectToFormPage()">
+                <i class="fas fa-plus-circle"></i>
+              </div>
             <div class="container-fluid px-4">
                 <h1 class="mt-4">Tables</h1>
                 <ol class="breadcrumb mb-4">
@@ -95,6 +98,7 @@
                     </div>
                 </div>
             </div>
+
         </footer>
     </div>
 </div>
@@ -103,7 +107,13 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js" crossorigin="anonymous"></script>
 <script>
+
+function redirectToFormPage() {
+      window.location.href = './forms/course.html'; // Replace 'formPage.html' with the URL of your form page
+    }
+
     $(document).ready(function() {
+        
         const fetchData = async () => {
             let limit = 10
              let searchKey=""
