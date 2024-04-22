@@ -14,7 +14,7 @@ exports.CreateExam = CatchAsync(async (req, res, next) => {
       difficult: { difficult, simple },
       objectives: { reminding, understanding, creativity },
       course_id: courseID,
-    });
+    }); 
   
     let { population, availableQuestions } = await fetchQuestions(exam);
     let fitnessScores =[];
