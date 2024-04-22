@@ -1,7 +1,7 @@
 ﻿# ExamSystem
 ## System ERD:
 ![ERD Image](Task%20material/examDesign.jpg)
-Here are two PDF files:
+
 - [Use Cases](Task%20material/Use%20Cases.pdf)
 - [Docs](Task%20material/Exam%20Design%20System%20Requirements.pdf)
 
