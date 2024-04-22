@@ -1,6 +1,6 @@
 ﻿# ExamSystem
 ## System ERD:
-![ERD Image](Task material/examDesign.jpg)
+![ERD Image](Task%20material/examDesign.jpg)
 
 ## Genetic Algorithm steps
 1. **Receive Teacher's Requirements**: The system receives the teacher's requirements, including the total number of questions, the number of questions per chapter, the difficulty level criteria, and the objective criteria.
